@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>放課後ボード</title>
+<style>
+:root{--purple:#695bd5;--ink:#242744;--muted:#777d96;--line:#e9eaf3;--bg:#f8f8fd}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif}
+header{background:#fff;border-bottom:1px solid var(--line);padding:18px max(20px,calc((100% - 900px)/2));display:flex;align-items:center;justify-content:space-between;gap:15px}
+.logo{font-size:21px;font-weight:800}.logo span{color:var(--purple)}header small{display:block;color:var(--muted);font-size:11px;font-weight:400}
+main{max-width:900px;margin:34px auto;padding:0 20px}.intro{background:linear-gradient(120deg,#efedff,#e9f8f5);border-radius:20px;padding:28px;margin-bottom:24px}.intro h1{margin:0 0 8px;font-size:clamp(24px,4vw,34px)}.intro p{margin:0;color:#747b95;line-height:1.8}
+.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:20px}.panel h2{font-size:19px;margin:0 0 18px}
+label{display:block;font-size:13px;font-weight:700;margin:14px 0 6px}
+input,textarea{width:100%;border:1px solid #e1e3ef;border-radius:10px;padding:12px;font:inherit;font-size:14px;background:#fcfcff;outline:none}
+input:focus,textarea:focus{border-color:#9b91ec;box-shadow:0 0 0 3px #695bd51a}textarea{resize:vertical;min-height:115px}
+button{border:0;border-radius:11px;padding:12px 18px;background:var(--purple);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+button:hover{background:#5548c2}.form-row{display:flex;justify-content:flex-end;margin-top:15px}.hint{font-size:12px;color:#969bb0;margin:10px 0 0}.warning{color:#ad8136;background:#fff8e8;padding:10px 12px;border-radius:9px;font-size:12px;margin:14px 0 0}
+.posts-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.posts-head h2{margin:0}.count{font-size:12px;color:var(--muted);background:#f2f1fc;padding:6px 11px;border-radius:20px}
+.post{border:1px solid var(--line);border-radius:13px;padding:17px;margin-top:13px;background:#fff}.post h3{margin:0 0 9px;font-size:16px;overflow-wrap:anywhere}.post p{margin:0;color:#626982;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}.post-meta{display:flex;justify-content:space-between;gap:10px;color:#969bb0;font-size:11px;margin-bottom:10px}.post-author{font-weight:700;color:#7770c8}.empty{text-align:center;color:#9298ad;padding:30px 10px}
+footer{text-align:center;color:#a0a5b7;font-size:11px;padding:22px}
+@media(max-width:560px){header{padding:15px 18px}.logo{font-size:18px}main{margin:20px auto;padding:0 14px}.intro{padding:22px}.panel{padding:18px}.post{padding:14px}}
+</style>
+</head>
+<body>
+<header><div class="logo"><span>✦</span> 放課後ボード<small>高校生のための交流掲示板</small></div></header>
+<main>
+<section class="intro"><h1>放課後の話題を、<br>みんなとシェアしよう。</h1><p>勉強、部活、趣味、日常のこと。<br>気軽に書き込んで、投稿を読んでみよう。</p></section>
+<section class="panel">
+<h2>新しい投稿を書く</h2>
+<form id="postForm">
+<label for="name">ニックネーム</label><input id="name" maxlength="30" placeholder="例：青いペンギン" required>
+<label for="title">タイトル</label><input id="title" maxlength="80" placeholder="投稿のタイトル" required>
+<label for="body">本文</label><textarea id="body" maxlength="2000" placeholder="話したいことを書いてね" required></textarea>
+<p class="warning">個人情報（本名・住所・学校名・電話番号・SNS IDなど）は書き込まないでください。</p>
+<div class="form-row"><button type="submit">投稿する</button></div>
+</form>
+</section>
+<section class="panel">
+<div class="posts-head"><h2>投稿一覧</h2><span class="count" id="count">0件</span></div>
+<div id="posts"><div class="empty">まだ投稿はありません。最初の投稿をしてみよう！</div></div>
+</section>
+</main>
+<footer>© 放課後ボード　|　静的サイトのデモ</footer>
+<script>
+const KEY="houkago-board-posts";
+const form=document.getElementById("postForm"), postsEl=document.getElementById("posts"), countEl=document.getElementById("count");
+let posts=[];
+try{posts=JSON.parse(localStorage.getItem(KEY)||"[]");if(!Array.isArray(posts))posts=[];}catch(e){posts=[];}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function render(){
+ countEl.textContent=posts.length+"件";
+ if(!posts.length){postsEl.innerHTML='<div class="empty">まだ投稿はありません。最初の投稿をしてみよう！</div>';return;}
+ postsEl.innerHTML=posts.map(p=>`<article class="post"><div class="post-meta"><span class="post-author">${escapeHTML(p.name)}</span><time>${escapeHTML(p.date)}</time></div><h3>${escapeHTML(p.title)}</h3><p>${escapeHTML(p.body)}</p></article>`).join("");
+}
+form.addEventListener("submit",e=>{
+ e.preventDefault();
+ const name=document.getElementById("name").value.trim(),title=document.getElementById("title").value.trim(),body=document.getElementById("body").value.trim();
+ if(!name||!title||!body)return;
+ posts.unshift({name,title,body,date:new Date().toLocaleString("ja-JP")});
+ try{localStorage.setItem(KEY,JSON.stringify(posts));}catch(e){alert("このブラウザでは投稿を保存できませんでした。");}
+ render();form.reset();
+});
+render();
+</script>
+</body>
+</html>
